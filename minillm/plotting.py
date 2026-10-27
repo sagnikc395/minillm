@@ -16,7 +16,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib.ticker import MaxNLocator  # noqa: E402
 
-from mini_llm.paths import PLOTS_DIR  # noqa: E402
+from minillm.paths import PLOTS_DIR  # noqa: E402
 
 
 def plot_losses(epochs_seen, tokens_seen, train_losses, val_losses) -> Path:

@@ -23,8 +23,8 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
-from mini_llm.config import GPT2_SIZES
-from mini_llm.paths import GPT2_DIR
+from minillm.config import GPT2_SIZES
+from minillm.paths import GPT2_DIR
 
 BASE_URL = "https://openaipublic.blob.core.windows.net/gpt-2/models"
 

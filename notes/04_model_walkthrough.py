@@ -9,10 +9,10 @@ import tiktoken
 import torch
 import torch.nn.functional as F
 
-from mini_llm.config import GPTConfig
-from mini_llm.generate import text_to_token_ids, token_ids_to_text
-from mini_llm.model import GPTModel
-from mini_llm.training import sample_text
+from minillm.config import GPTConfig
+from minillm.generate import text_to_token_ids, token_ids_to_text
+from minillm.model import GPTModel
+from minillm.training import sample_text
 
 
 def parameter_budget(model):

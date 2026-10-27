@@ -3,8 +3,8 @@
 import torch
 from torch import nn
 
-from mini_llm.attention import MultiHeadAttention
-from mini_llm.config import GPTConfig
+from minillm.attention import MultiHeadAttention
+from minillm.config import GPTConfig
 
 
 class GELU(nn.Module):

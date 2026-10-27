@@ -15,7 +15,7 @@ import tiktoken
 import torch
 from torch.utils.data import DataLoader, Dataset
 
-from mini_llm.paths import SPAM_DIR
+from minillm.paths import SPAM_DIR
 
 URL = "https://archive.ics.uci.edu/static/public/228/sms+spam+collection.zip"
 

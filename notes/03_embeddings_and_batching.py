@@ -6,7 +6,7 @@ into the tensor the first transformer block actually sees.
 
 import torch
 
-from mini_llm.data import create_dataloader, load_verdict
+from minillm.data import create_dataloader, load_verdict
 
 VOCAB_SIZE = 50257
 OUTPUT_DIM = 256

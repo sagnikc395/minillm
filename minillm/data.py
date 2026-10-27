@@ -7,7 +7,7 @@ import tiktoken
 import torch
 from torch.utils.data import DataLoader, Dataset
 
-from mini_llm.paths import VERDICT_FILE
+from minillm.paths import VERDICT_FILE
 
 VERDICT_URL = (
     "https://raw.githubusercontent.com/rasbt/LLMs-from-scratch/main/"

@@ -14,7 +14,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import torch  # noqa: E402
 
-from mini_llm.paths import PLOTS_DIR  # noqa: E402
+from minillm.paths import PLOTS_DIR  # noqa: E402
 
 VOCAB = [
     "closer",

@@ -2,8 +2,8 @@
 
 import tiktoken
 
-from mini_llm.data import load_verdict
-from mini_llm.tokenizer import SimpleTokenizer, build_vocab, tokenize
+from minillm.data import load_verdict
+from minillm.tokenizer import SimpleTokenizer, build_vocab, tokenize
 
 
 def main():

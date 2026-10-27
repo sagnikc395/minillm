@@ -33,20 +33,60 @@ final checkpoint
 
 ## running it
 
+each command maps to one stage of the book, in the order the book builds them.
+everything downloads what it needs on first run.
+
+**ch. 2-4 -- tokenizer, attention, the model.** no CLI stage of its own; the
+pieces are exercised by the `notes/` scripts (`notes/README.md` has the table):
+
 ```bash
-# train the small GPT from scratch on data/the_verdict.txt (downloaded on first run)
+uv run python notes/01_attention_from_scratch.py
+uv run python notes/04_model_walkthrough.py
+```
+
+**ch. 5 -- pretraining from scratch.** trains a 124M-geometry GPT on
+`data/the_verdict.txt` (~5k tokens, so this is a mechanics demo, not a useful
+model), plots the loss curves to `plots/` and writes a checkpoint to
+`saved_models/`:
+
+```bash
 uv run python main.py train --epochs 10
 uv run python main.py train --epochs 1 --debug --no-save   # quick sanity run
+```
 
-# download OpenAI's original GPT-2 weights (124M / 355M / 774M / 1558M)
-uv run python main.py download-weights --size 124M
+`--debug` also prints the batch shapes and the untrained loss, which should sit
+near log(50257) ~= 10.8.
 
-# load those weights into our GPTModel and sample from them
+**ch. 5.5 -- loading OpenAI's pretrained weights.** download a checkpoint, then
+sample from it through our own `GPTModel`:
+
+```bash
+uv run python main.py download-weights --size 124M     # or 355M / 774M / 1558M
 uv run python main.py pretrained --prompt "Every effort moves you" --top-k 50 --temperature 1.0
+```
 
-# build the spam-classification splits for finetuning
+`--temperature 0` with no `--top-k` is greedy decoding.
+
+**ch. 6.2-6.4 -- the classification dataset.** downloads the SMS spam
+collection, balances it, writes `data/spam/{train,validation,test}.csv` and
+reports the shapes coming out of each loader:
+
+```bash
 uv run python main.py spam-data
 ```
+
+**ch. 6.5-6.6 -- freezing the model and attaching a classification head.**
+loads the pretrained weights, freezes every parameter, swaps `out_head` for a
+2-class `nn.Linear`, unfreezes the last transformer block plus the final norm,
+and pushes one batch through to show the `(batch, tokens, 2)` logits:
+
+```bash
+uv run python main.py spam-classifier
+uv run python main.py spam-classifier --head-only   # train nothing but the new head
+```
+
+the predictions it prints are random -- the head is newly initialised and
+nothing has been trained yet.
 
 ## layout
 
@@ -64,6 +104,7 @@ mini_llm/
   training.py      losses, the training loop, device selection
   gpt2_weights.py  OpenAI's pretrained checkpoints -> our GPTModel
   spam.py          the spam-classification finetuning dataset
+  classifier.py    freezing the base model, and the 2-class output head
   plotting.py      loss curves
   paths.py         every on-disk location, derived from the repo root
   cli.py           the click group behind main.py
@@ -131,6 +172,16 @@ downloads, trains or prints at import time.
   ~750 spam means a classifier can hit 87% accuracy by always answering ham, so
   accuracy would say nothing. balancing before the split keeps train/val/test all
   balanced.
+- **freezing and the head swap live in `classifier.py`, not `spam.py`.**
+  `spam.py` is the *data*; turning a 50257-way language model into a 2-way
+  classifier is a change to the *model*, and the two get used independently.
+  the order inside `prepare_for_classification()` matters: the
+  `requires_grad = False` sweep runs first, because the new `out_head` and the
+  unfrozen last block have to come after it or they would be frozen too.
+- **the last transformer block and the final norm are unfrozen, not just the
+  head.** with only the new head trainable, the features it reads are fixed at
+  whatever the language-modelling objective produced; the book measures a clear
+  accuracy gap. `--head-only` keeps that ablation runnable.
 - **matplotlib uses the Agg backend and saves to `plots/`.** no run ever blocks
   on an open window, and the timestamped filenames mean successive runs don't
   overwrite each other.

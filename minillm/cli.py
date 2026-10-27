@@ -11,12 +11,12 @@ import click
 import tiktoken
 import torch
 
-from mini_llm.config import GPT2_SIZES, GPTConfig, gpt2_config
-from mini_llm.data import load_verdict, train_val_loaders
-from mini_llm.model import GPTModel
-from mini_llm.paths import GPT2_DIR, MODELS_DIR
-from mini_llm.plotting import plot_losses
-from mini_llm.training import calc_loss_loader, get_device, sample_text, train_model
+from minillm.config import GPT2_SIZES, GPTConfig, gpt2_config
+from minillm.data import load_verdict, train_val_loaders
+from minillm.model import GPTModel
+from minillm.paths import GPT2_DIR, MODELS_DIR
+from minillm.plotting import plot_losses
+from minillm.training import calc_loss_loader, get_device, sample_text, train_model
 
 # Training hyperparameters, in one place so a run's settings are visible at a
 # glance rather than scattered across call sites.
@@ -161,7 +161,7 @@ def pretrained(size, models_dir, prompt, max_new_tokens, top_k, temperature):
     """Sample from OpenAI's GPT-2 weights, downloading them if needed."""
     # imported here rather than at module scope: it pulls in tensorflow, which
     # the train command never touches and which is slow to import
-    from mini_llm.gpt2_weights import download_and_load_gpt2, load_weights_into_gpt
+    from minillm.gpt2_weights import download_and_load_gpt2, load_weights_into_gpt
 
     _, params = download_and_load_gpt2(size, models_dir)
 
@@ -195,7 +195,7 @@ def pretrained(size, models_dir, prompt, max_new_tokens, top_k, temperature):
 )
 def download_weights(size, models_dir):
     """Download OpenAI's original GPT-2 weights without running the model."""
-    from mini_llm.gpt2_weights import download_and_load_gpt2
+    from minillm.gpt2_weights import download_and_load_gpt2
 
     settings, params = download_and_load_gpt2(size, models_dir)
     click.echo(f"settings: {settings}")
@@ -207,7 +207,7 @@ def download_weights(size, models_dir):
 @click.option("--batch-size", default=8, show_default=True)
 def spam_data(batch_size):
     """Build the SMS spam train/validation/test splits and check the loaders."""
-    from mini_llm.spam import build_dataloaders
+    from minillm.spam import build_dataloaders
 
     torch.manual_seed(SEED)
     train_loader, val_loader, test_loader = build_dataloaders(batch_size=batch_size)
@@ -221,6 +221,53 @@ def spam_data(batch_size):
         click.echo(
             f"{name}: {len(loader)} batches, inputs {tuple(inputs.shape)}, labels {tuple(labels.shape)}"
         )
+
+
+@cli.command("spam-classifier")
+@click.option(
+    "--size", default="124M", type=click.Choice(tuple(GPT2_SIZES)), show_default=True
+)
+@click.option("--batch-size", default=8, show_default=True)
+@click.option(
+    "--tune-last-block/--head-only",
+    default=True,
+    show_default=True,
+    help="also unfreeze the last transformer block and the final norm",
+)
+def spam_classifier(size, batch_size, tune_last_block):
+    """Load pretrained GPT-2, freeze it, and attach a 2-class output head."""
+    from minillm.classifier import (
+        NUM_CLASSES,
+        prepare_for_classification,
+        trainable_parameters,
+    )
+    from minillm.gpt2_weights import download_and_load_gpt2, load_weights_into_gpt
+    from minillm.spam import build_dataloaders
+
+    torch.manual_seed(SEED)
+
+    _, params = download_and_load_gpt2(size, GPT2_DIR)
+    model = GPTModel(gpt2_config(size))
+    load_weights_into_gpt(model, params)
+
+    total = sum(p.numel() for p in model.parameters())
+    prepare_for_classification(model, NUM_CLASSES, tune_last_block)
+    click.echo(f"{trainable_parameters(model)} trainable of {total} parameters")
+
+    device = get_device()
+    model.to(device)
+    model.eval()
+
+    train_loader, _, _ = build_dataloaders(batch_size=batch_size)
+    inputs, labels = next(iter(train_loader))
+    with torch.no_grad():
+        logits = model(inputs.to(device))
+
+    # one logit pair per token; the book classifies on the *last* one, since
+    # with causal attention only that position has seen the whole message
+    click.echo(f"logits {tuple(logits.shape)} -> last token {tuple(logits[:, -1, :].shape)}")
+    click.echo(f"predicted {logits[:, -1, :].argmax(dim=-1).tolist()}")
+    click.echo(f"actual    {labels.tolist()}")
 
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ makes deep stacks untrainable.
 import torch
 from torch import nn
 
-from mini_llm.model import GELU
+from minillm.model import GELU
 
 
 class DeepNetwork(nn.Module):

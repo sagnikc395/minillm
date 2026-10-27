@@ -18,9 +18,9 @@ Importing any of these is free of side effects: nothing downloads, trains or
 prints at import time. The step-by-step explorations live in notes/ instead.
 """
 
-from mini_llm.config import GPT2_SIZES, GPTConfig, gpt2_config
-from mini_llm.generate import generate, text_to_token_ids, token_ids_to_text
-from mini_llm.model import GPTModel
+from minillm.config import GPT2_SIZES, GPTConfig, gpt2_config
+from minillm.generate import generate, text_to_token_ids, token_ids_to_text
+from minillm.model import GPTModel
 
 __all__ = [
     "GPT2_SIZES",

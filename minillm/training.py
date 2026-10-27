@@ -3,7 +3,7 @@
 import torch
 import torch.nn.functional as F
 
-from mini_llm.generate import generate, text_to_token_ids, token_ids_to_text
+from minillm.generate import generate, text_to_token_ids, token_ids_to_text
 
 
 def get_device(verbose: bool = True) -> torch.device:
