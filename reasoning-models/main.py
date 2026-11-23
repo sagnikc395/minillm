@@ -1,4 +1,9 @@
-from reasoning_from_scratch.qwen3 import download_qwen3_small, Qwen3Tokenizer
+from reasoning_from_scratch.qwen3 import (
+    download_qwen3_small,
+    Qwen3Tokenizer,
+    Qwen3Model,
+    QWEN_CONFIG_06_B,
+)
 from pathlib import Path
 import torch
 
@@ -33,7 +38,7 @@ def get_device(enable_tensor_cores=True):
 
 
 def main():
-    download_qwen3_small(kind="base", tokenizer_only=True, out_dir="qwen3")
+    download_qwen3_small(kind="base", tokenizer_only=False, out_dir="qwen3")
 
     # load the tokenizer settings from the tokenizer file into Qwen3Tokenizer path
     tokenizer_path = Path("qwen3") / "tokenizer-base.json"
@@ -50,6 +55,13 @@ def main():
     for k, v in enumerate(input_token_ids_list):
         print(f" {k} | {v} -> {tokenizer.decode([v])}")
 
+
+    device =get_device()
+    model_path = Path("qwen3") / "qwen3-0.6B-base.pth"
+    model = Qwen3Model(QWEN_CONFIG_06_B)
+    model.load_state_dict(torch.load(model_path))
+    model.to(device)
+    print(model)
 
 if __name__ == "__main__":
     main()
